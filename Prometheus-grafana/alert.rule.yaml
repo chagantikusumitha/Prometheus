@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alert
+data:
+  alert.rule.yaml: |
+    groups:
+    - name: kubernetes-pods
+      rules:
+      - alert: PodDown
+        expr: absent(up{job="kubelet"} == 1) 
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pod {{ $labels.pod }} is down"
+          description: "The pod {{ $labels.pod }} is not reporting any data, indicating it may be down or unreachable."
+      
+      - alert: ContainerDown
+        expr: absent(container_memory_usage_bytes{container_name!="POD",container_name!=""})
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.container_name }} is down in Pod {{ $labels.pod }}"
+          description: "The container {{ $labels.container_name }} in pod {{ $labels.pod }} is not reporting any memory usage, indicating it may be down or unreachable."
