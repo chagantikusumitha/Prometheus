@@ -1,0 +1,28 @@
+﻿Issues Faced
+
+
+Issue_1 : CrashLoopBackOff
+This error occured while creating pods.
+Which shows there is an error in the syntax of the yaml files.
+I have corrected all the syntaxes,indentations and ran deployment files again.
+Then the error is solved.
+
+Issue_2 : InvalidImageName
+This error is figured out when I tried checking pods for deployments I created.
+Then I have checked the logs of pods using command 
+kubectl logs <pod name>
+Then I have changed the image name and tried pulling the image using docker first and then tried deploying again.
+Then all the pods were ready.
+
+Issue_3 : Invalid Credentials for grafana website.
+Initially I have created values.yaml file also.
+Then when I have tried using the values I have given in the values.yaml but it has shown invalid credentials.
+So, I have just deleted values.yaml file and tried the website using default credentials like admin username and admin password, then it worked.
+
+Issue_4 : SVC_NOT_FOUND
+I have got an error stating Exiting due to SVC_NOT_FOUND: Service 'grafana' was not found in 'default' namespace. You may select another namespace by using 'minikube service grafana -n <namespace>'. Or list out all the services using 'minikube service list'.
+Then I have solved it using following command:
+kubectl get namespaces
+minikube service grafana -n <namespace>
+kubectl get deployments
+kubectl get services
