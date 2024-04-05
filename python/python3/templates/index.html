@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibonacci Sequence</title>
+</head>
+<body>
+    <h1>Fibonacci Sequence</h1>
+    <form method="POST">
+        <label for="nterms">Enter number of terms:</label>
+        <input type="number" id="nterms" name="nterms" min="1" required>
+        <button type="submit">Generate</button>
+    </form>
+    {% if fib_series %}
+    <h2>Fibonacci Sequence:</h2>
+    <ul>
+        {% for term in fib_series %}
+        <li>{{ term }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</body>
+</html>
