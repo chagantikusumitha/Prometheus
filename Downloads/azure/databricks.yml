@@ -1,0 +1,29 @@
+bundle:
+  name: mlops_timeseries_framework
+
+include:
+  - resources/*.yml
+targets:
+  dev:
+    workspace:
+      host: https://adb-1863614601626648.8.azuredatabricks.net
+
+
+  tst:
+    workspace:
+      host: https://adb-1863614601626648.8.azuredatabricks.net
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-1863614601626648.8.azuredatabricks.net
+
+  self:
+    default: true
+    mode: development
+    workspace:
+      host: https://adb-1863614601626648.8.azuredatabricks.net
+      root_path: "/Users/${workspace.current_user.userName}/self" 
+      file_path: "/Users/${workspace.current_user.userName}/self" 
+      artifact_path: "/Users/${workspace.current_user.userName}/self/metadata" 
+      state_path: "/Users/${workspace.current_user.userName}/self/metadata"

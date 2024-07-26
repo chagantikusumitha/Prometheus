@@ -1,0 +1,86 @@
+# This script is a YAML pipeline definition for Azure DevOps.
+# It defines a pipeline with a single stage ("MyStage") and a single job ("MyJob").
+# The job performs the following tasks:
+
+# 1. Installs Python and pip3.
+# 2. Installs the "pyyaml" package.
+# 3. Runs the "update_libs.py" script.
+# 4. Installs the Databricks CLI.
+# 5. Displays the environment name based on the branch name.
+# 6. Determines the environment based on the branch name and modifies the "config.yml" file accordingly.
+# 7. Deploys a Databricks bundle to the specified environment.
+
+# Note: The actual values for environment variables (e.g., DATABRICKS_HOST, svc_principal_id, svc_principal_secret)
+# are expected to be provided by the Azure DevOps pipeline configuration.
+
+# Define the pipeline stages and jobs
+stages:
+- stage: Build and Deploy
+  jobs:
+  - job: MyJob
+    pool:
+      name: 'BD-IAC-POOL-Linux'
+    steps:
+
+    # Step 1: Install Python and pip3
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.x'
+        addToPath: true
+
+    # Step 2: Install the "pyyaml" package
+    - script: |
+        pip install pyyaml
+      displayName: 'Install pyyaml'
+
+    # Step 3: Run the "update_libs.py" script
+    - script: |
+        python3 mlops_timeseries_framework/utils/update_libs.py
+      displayName: 'Run update_libs.py'
+
+    # Step 4: Install the Databricks CLI
+    - script: |
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh |  sh
+        databricks --version
+      displayName: 'Databricks Install'
+
+    # Step 5: Display the environment name based on the branch name
+    - script: |
+        echo "Environment: Development"
+        echo "host: $DATABRICKS_HOST"
+      displayName: "Display Environment Name"
+      env:
+        DATABRICKS_HOST: $(dbr_host)
+
+    # Step 6: Determine the environment based on the branch name and modify the "config.yml" file
+    - script: |
+        echo "Build Source Branch: $(Build.SourceBranch)"
+        BRANCH_NAME="$(Build.SourceBranch)"
+        if [[ "$BRANCH_NAME" == "refs/heads/main" || "$BRANCH_NAME" == "refs/heads/prod" || "$BRANCH_NAME" =~ "^refs/heads/release.*"]]; then
+          ENV="prod"
+        elif [[ "$BRANCH_NAME" == "refs/heads/develop" ]]; then
+          ENV="dev"
+        elif [[ "$BRANCH_NAME" =~ ^refs/heads/feature_.* ]]; then
+          ENV="dev"  # Feature branches are for development
+        elif [[ "$BRANCH_NAME" == refs/heads/staging ]]; then
+          ENV="qas"  # Releases are tested in QAS
+        elif [[ "$BRANCH_NAME" =~ ^refs/heads/hotfix.* ]]; then
+          ENV="prod"  # Hotfixes are applied directly to production
+        else
+          ENV="dev"  # Default to dev for any other branches
+        fi
+        echo "Determined environment: $ENV"
+        sed -i -e 's/env: .*/env: '"$ENV"'/' config.yml
+        echo "Environment set to: $ENV"
+        echo "##vso[task.setvariable variable=databricks_bundle_env;]$ENV"
+        echo "Databricks Bundle Environment set to: databricks_bundle_env"
+      displayName: 'Set Environment Variables and Modify Config'
+
+    # Step 7: Deploy a Databricks bundle to the specified environment
+    - script: |
+        databricks bundle deploy -t $(databricks_bundle_env)
+      env:
+        DATABRICKS_HOST: $(dbr_host)
+        DATABRICKS_CLIENT_ID: $(svc_principal_id)
+        DATABRICKS_CLIENT_SECRET: $(svc_principal_secret)
+      displayName: 'Deploy Databricks Bundle'

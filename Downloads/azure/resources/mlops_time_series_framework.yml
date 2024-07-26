@@ -1,0 +1,50 @@
+resources:
+  jobs:
+    mlops_timeseries_framework:
+      name: mlops_timeseries_framework
+      tasks:
+        - task_key: pre_execution
+          existing_cluster_id: 0704-084646-d0v6w5sa
+          notebook_task:
+            notebook_path: ../mlops_timeseries_framework/set_vars.py
+          libraries:
+            - pypi:
+                package: "PyYAML"
+        
+        - task_key: ingestion
+          depends_on:
+            - task_key: pre_execution
+          spark_python_task:
+            python_file: ../run.py
+            parameters: [mlops_timeseries_framework.ingestion.preprocess.main_ingestion]
+          libraries:
+            - pypi:
+                package: "PyYAML"
+          existing_cluster_id: 0704-084646-d0v6w5sa
+
+        - task_key: training_and_forcasting
+          depends_on:
+            - task_key: ingestion
+          spark_python_task:
+            python_file: ../run.py
+            parameters: [mlops_timeseries_framework.training.parallel_model_training.main_forecast_all_skus]
+          libraries:
+            - pypi:
+                package: "PyYAML"
+          existing_cluster_id: 0704-084646-d0v6w5sa
+
+        - task_key: post_execution
+          depends_on:
+            - task_key: training_and_forcasting
+          existing_cluster_id: 0704-084646-d0v6w5sa
+          notebook_task:
+            notebook_path: ../mlops_timeseries_framework/utils/mlflow_utils/post_execution.py
+          libraries:
+            - pypi:
+                package: "PyYAML"
+        
+      parameters:
+      - name: brand
+        default: "BD"
+      - name: log_artifacts_to_mlflow
+        default: "false"
